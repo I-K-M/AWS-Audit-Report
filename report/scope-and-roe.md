@@ -1,50 +1,34 @@
-# Scope and Rules of Engagement — Demonstration Extract
+# Scope and Rules of Engagement
 
-**Status:** Illustrative template only. **Not signed, authorised or binding.**  
-**Target:** Fictional organisation and independent, disposable AWS training accounts.
+## Engagement scope
 
-## Engagement purpose
+The assessment covers a series of disposable AWS accounts supplied for isolated training exercises. Each exercise defines its own temporary credentials, allocated region, resource set and permitted actions. Activities are confined to the allocated environment and its operating window.
 
-Assess defined AWS IAM, storage, EC2 and logging security controls; validate prescribed attack paths in lab environments; document findings and candidate remediation. The purpose is educational portfolio work rather than a commissioned penetration test.
-
-## Authorisation and responsibility
-
-A real engagement must have an executed statement of work and written authorisation from a person entitled to authorise testing of every affected AWS account and relevant third-party asset. AWS's applicable penetration-testing policy must also be checked. The laboratory platform's explicit terms control any hands-on exercises.
-
-## In-scope assets
-
-| Dimension | Demonstration scope |
+| Item | Scope |
 | --- | --- |
-| AWS accounts | Only the disposable account assigned to each lab at deployment; no real account IDs supplied |
-| Regions | Only the region allocated to that lab; no cross-region discovery without authorisation |
-| Identities | Lab-provided temporary users/roles and explicitly reachable resources |
-| Services | IAM, STS, Lambda, EC2/IMDS, S3, EBS, SSM, Secrets Manager, CloudTrail and GuardDuty where present |
-| Activity | Read-only enumeration by default; narrowly defined mutating actions solely where that lab explicitly requires them |
-| Time | The individual lab's TTL and permitted window; never presumed to be permanent |
-| Data | Synthetic challenge artefacts only; minimise collection |
+| AWS accounts | The account allocated to the individual exercise |
+| Regions | The region assigned on deployment |
+| Services | IAM, STS, EC2, Lambda, S3, EBS, SSM, Secrets Manager, CloudTrail and GuardDuty, where included |
+| Starting access | Temporary IAM user or role credentials supplied for the exercise |
+| Data | Synthetic challenge records and resources |
+| Test type | Reconnaissance, constrained exploitation, remediation or log analysis as specified by the exercise |
 
-## Explicit exclusions
+## Operating rules
 
-No activity against other customers' AWS accounts, cloud infrastructure outside the allocated lab, unmanaged public services, live organisations or third-party systems. No denial-of-service, persistence outside explicit training exercises, covert log alteration, uncontrolled credential reuse, production modifications or extraction of genuine personal/customer data.
+Read-only exercises permit inspection and enumeration only. Exploitation exercises permit the specified IAM, STS, Lambda or EC2 operations within the disposable account. Hardening exercises permit changes to the designated resources. Forensic exercises prohibit changes to the scene.
 
-## Operating controls
+Excluded activities include denial-of-service, operations against unrelated AWS accounts, external third-party assets, uncontrolled data extraction, interference with production infrastructure and alteration of security logs.
 
-- Verify the AWS principal and region before work.
-- Maintain a time-stamped testing log and preserve exact commands where non-sensitive.
-- Stop immediately if activity unexpectedly crosses the scope or reveals actual personal data, live credentials or shared third-party infrastructure.
-- Never run generated `loot` commands, invasive Pacu modules or mutation operations without reviewing their effect and confirming they are permitted.
-- Use synthetic markers to prove access; do not collect unnecessary sensitive content.
-- Make no changes to CloudTrail, GuardDuty or evidence repositories without separately and explicitly authorised scope.
-- Keep test credentials in an approved local secret store, do not commit them, and revoke or discard them when the lab expires.
+## Real-engagement requirements
 
-## Escalation and stop conditions
+A customer engagement would additionally need a signed authorisation identifying the account owner, account IDs, regions, excluded resources, permitted attack techniques, test windows, stop conditions and named technical/incident contacts. The agreement should cover evidence handling, incident escalation, restoration, credential revocation and applicable AWS testing restrictions.
 
-In a real engagement, the signed RoE must name the authorised client representative, the technical contact and 24-hour incident contact, including a communication route, pause criteria, approval process for out-of-scope discoveries and restoration owner. For these scenario briefs **no names, contacts or signed authority are available**; therefore this document cannot itself authorise testing.
+No live engagement authorisation is implied by this document.
 
-## Evidence, privacy and retention
+## Stop conditions
 
-Sanitise AWS account identifiers, session credentials, personal details, secret values, hostnames and IP addresses. Retain only the minimum artefacts needed for validation and delete source materials according to the governing engagement agreement. Do not place raw production logs or real secrets in this public repository.
+Testing must stop if the observed account differs from the allocated account, a third-party asset is reached, sensitive non-synthetic data is encountered, service stability is affected or the permitted window expires. Any unexpected exposure is escalated through the designated exercise or client channel.
 
-## Completion criteria
+## Evidence handling
 
-Assessment completion requires scope compliance, findings traceability, documented limitations, risk-based remediation and an agreed procedure for retesting. This repository currently documents a **demonstration framework**, not completed contractual sign-off.
+The report uses sanitised account and resource references. Technical evidence for a production engagement would be stored under an agreed retention and access policy; secrets and customer data are not part of this public assessment.

@@ -1,66 +1,52 @@
 # AWS Security Assessment
-### Anonymised, scenario-based cloud security assessment | Professional portfolio case study
 
-**Assessment type:** AWS configuration review, privilege-escalation path analysis, simulated incident investigation and remediation planning  
-**Environment:** Independent, disposable AWS training laboratories  
-**Document status:** Scenario-based assessment; source evidence not yet supplied for independent verification  
-**Prepared:** 13 November 2026 | **Language:** British English | **Classification:** Public / Sanitised
+**IAM privilege escalation · Cloud attack paths · Data exposure · Detection and hardening**
 
-> **Evidence integrity notice.** This repository is **not** a report of a commissioned engagement or a live organisation's security posture. It consolidates fourteen separate training-laboratory briefs into an anonymised professional assessment. Described weaknesses are supported by the supplied lab scenarios, but actual command outputs, screenshots and CloudTrail records were **not provided** during compilation. Consequently, risk ratings are provisional, attack paths are labelled as laboratory scenarios, and no exploitation or remediation is represented as independently verified. No real credentials, account identifiers, personal data or secret values are published.
+Security assessment of fourteen isolated AWS training environments, covering identity compromise, privilege delegation, compute metadata, storage exposure and incident investigation. The cases are anonymised and grouped by control failure rather than presented as fourteen unrelated challenges.
 
-## Executive overview
+## Assessment summary
 
-The source scenarios demonstrate how an apparently constrained AWS identity can become a material risk when IAM permissions, trust relationships, service roles and data-access controls interact. The strongest self-contained scenario links modification of an IAM managed policy to privileged Lambda execution, subsequent role assumption and access to a protected secret. A separate application scenario connects server-side request forgery (SSRF), optional IMDSv1 and overprivileged instance credentials.
+Two attack paths deserve particular attention:
 
-The assessment organises the exercises into **eight thematic findings**, four of which have *indicative* critical severity **if their described attack preconditions are met**. These are teaching scenarios, not eight independently confirmed defects in one production estate.
+**CI identity to administrative access.** A service principal can modify a managed policy attached to itself. The resulting permissions allow it to deploy Lambda with a more privileged execution role, assume another role and access a protected secret.
 
-| ID | Thematic finding | Indicative severity | Source labs |
-| --- | --- | --- | --- |
-| [F-001](findings/F-001-self-modifying-iam-policy.md) | IAM managed-policy self-modification permits privilege escalation | Critical | 2, 5, 14 |
-| [F-002](findings/F-002-passrole-lambda-privilege-escalation.md) | Privileged execution through `iam:PassRole` and Lambda | Critical | 3, 14 |
-| [F-003](findings/F-003-break-glass-role-trust.md) | Overly broad emergency-role trust enables unintended assumption | Critical | 4, 5 |
-| [F-004](findings/F-004-exposed-reusable-secrets.md) | Reusable credentials exposed through configuration | High | 1, 8 |
-| [F-005](findings/F-005-s3-data-exposure.md) | Excessive S3 object access and insufficient bucket guardrails | High | 7, 9 |
-| [F-006](findings/F-006-ssrf-imds-credential-exposure.md) | SSRF enables EC2 instance-credential retrieval via IMDSv1 | Critical | 11, 13 |
-| [F-007](findings/F-007-ebs-snapshot-disclosure.md) | Inappropriately shared EBS snapshot exposes retained data | High | 12 |
-| [F-008](findings/F-008-iam-credential-governance.md) | Inadequate IAM credential and privilege governance | High | 1, 5 |
+**SSRF to EC2 role compromise.** An application fetches attacker-controlled URLs. With IMDSv1 accessible, the request can expose instance-role credentials that are authorised to read sensitive data.
 
-Severity denotes **potential consequence under the specified laboratory conditions**, not validated exploitability or business risk in a live estate.
+Additional scenarios cover broad emergency-role trust, secrets in readable configuration, excessive S3 access, exposed EBS snapshots and ineffective IAM credential controls.
 
-## Read the assessment
+## Findings
 
-| Document | Purpose |
-| --- | --- |
-| [Assessment report](report/assessment-report.md) | Executive summary, assumptions, risk register, root-cause analysis and conclusions |
-| [Scope & rules of engagement](report/scope-and-roe.md) | Authorisation model, in-scope activities, exclusions, stop conditions and evidence handling |
-| [Assessment methodology](report/methodology.md) | Tool selection, least-privilege access, evidence standard and validation approach |
-| [Attack-path analysis](report/attack-paths.md) | Two independent scenario kill chains and their preventative controls |
-| [Detection & incident response](report/detection-and-response.md) | CloudTrail/GuardDuty expectations, investigation and test-coverage caveats |
-| [Remediation roadmap](report/remediation-roadmap.md) | Risk-based sequencing, ownership, acceptance criteria and retesting |
-| [Findings](findings/) | Eight individual, actionable findings with verification and remediation |
-| [Lab-to-finding traceability](appendices/lab-traceability.md) | Mapping from each of the fourteen source scenarios to the assessment |
-| [Evidence register](appendices/evidence-register.md) | Evidence placeholders, provenance requirements and sanitisation controls |
-| [Interview revision](appendices/cloud-security-interview-brief.md) | Concise AWS security interview answers and certification direction |
+| ID | Security issue | Risk* |
+| --- | --- | --- |
+| [F-01](findings/F-001-self-modifying-iam-policy.md) | Self-modifiable IAM policy | Critical |
+| [F-02](findings/F-002-passrole-lambda-privilege-escalation.md) | Privileged Lambda execution via `iam:PassRole` | Critical |
+| [F-03](findings/F-003-break-glass-role-trust.md) | Broad trust on emergency administrator role | Critical |
+| [F-04](findings/F-004-exposed-reusable-secrets.md) | Exposed reusable credentials | High |
+| [F-05](findings/F-005-s3-data-exposure.md) | Excessive S3 object access | High |
+| [F-06](findings/F-006-ssrf-imds-credential-exposure.md) | SSRF and instance-metadata credential theft | Critical |
+| [F-07](findings/F-007-ebs-snapshot-disclosure.md) | Shared EBS snapshot exposes stored data | High |
+| [F-08](findings/F-008-iam-credential-governance.md) | Weak IAM privilege and credential governance | High |
 
-## How to use the material
+*Risk ratings reflect the deliberately vulnerable exercise conditions, not an assessed production estate.*
 
-1. **Portfolio review:** Start with the [assessment report](report/assessment-report.md), then inspect an IAM finding and the associated attack-path analysis.
-2. **Technical validation:** Recreate a deliberately vulnerable configuration **only within an authorised, isolated environment**. Capture baseline permissions, test results, relevant CloudTrail event IDs and after-remediation outputs.
-3. **Evidence promotion:** Change an item from *Scenario-supported / Unverified* to *Lab-verified* only when a redacted, independently reviewable artefact has been attached to the [evidence register](appendices/evidence-register.md).
-4. **Client adaptation:** Replace the demonstration RoE with a signed, client-specific agreement and reassess all severity ratings against the actual business impact and compensating controls.
+## Report
 
-## Professional scope and limitations
+- [Executive report and risk register](report/assessment-report.md)
+- [Attack paths](report/attack-paths.md)
+- [Technical methodology](report/methodology.md)
+- [CloudTrail, GuardDuty and incident investigation](report/detection-and-response.md)
+- [Remediation plan](report/remediation-roadmap.md)
+- [Scope and rules of engagement](report/scope-and-roe.md)
+- [Source exercise index](appendices/lab-traceability.md)
 
-- Exercises originated in separate disposable labs; no single real-world environment is asserted to contain every finding.
-- No live customer data, account identifiers, public IP addresses, exploitable hostnames or working credentials are included.
-- Tool mentions (AWS CLI, CloudFox, Pacu, Prowler and ScoutSuite) describe a proposed approach, **not evidence that every tool was run**.
-- Findings are grouped by **root cause and impact**, not by the number of lab flags.
-- AWS platform behaviour and tool capabilities may change; re-check vendor guidance at the time of any real engagement.
+## Coverage
 
-## Responsible use
+**Identity:** IAM users, roles, managed policies, trust policies, STS, MFA, access keys and privilege escalation.
 
-Content is intended for **authorised security testing, defensive engineering and education**. Do not apply invasive tests to environments without written approval. The repository intentionally excludes working exploitation payloads, credential values and real sensitive outputs.
+**Compute:** Lambda execution roles, EC2, SSRF, IMDS and EBS snapshots.
 
----
+**Data:** S3 bucket policies, ACLs, object versions, SSM Parameter Store and Secrets Manager.
 
-**Assessment proposition:** identify the exposure, demonstrate the path within scope, explain the business consequence, prescribe an implementable control, and define the retest needed to close the risk.
+**Security operations:** CloudTrail, GuardDuty, investigation timelines and hardening validation.
+
+The assessment is based on the configuration and attack scenarios described in the training exercises. Original command output was not supplied for publication, so the report does not claim independent execution or production findings.

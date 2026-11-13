@@ -1,38 +1,50 @@
-# Assessment Methodology and Tooling
+# Assessment Methodology
 
-## Approach
+The source exercises use four different modes: reconnaissance, exploitation, remediation and incident investigation. The same method applies across them, with permissions adjusted for the particular mode.
 
-The conceptual workflow is: **authorise → identify → enumerate → analyse trust and permissions → validate a bounded hypothesis → inspect detection coverage → report → remediate → retest**.
+## 1. Initial access and inventory
 
-Independent lab briefs are analysed separately. Their permissions and findings must never be assumed to coexist in a single AWS account.
+Identify the AWS principal with `sts:GetCallerIdentity`, confirm the allocated region, then inspect the permissions held by the starting identity. Inventory the resources relevant to the test: IAM policies and trusts, Lambda execution roles, EC2 metadata options, S3 access controls and exposed snapshot permissions.
 
-## Tool selection and IAM requirements
+Avoid assuming a principal can perform an operation simply because one policy appears to allow it. Resource policies, service control policies, permission boundaries, session policies and conditions may change the effective result.
 
-| Tool | Purpose | Preferred permissions | Boundaries |
-| --- | --- | --- | --- |
-| AWS CLI / STS | Confirm identity, inspect individual resources, capture reproducible outputs | Targeted `sts:GetCallerIdentity`, required `Get/List/Describe` | No mutation unless expressly authorised |
-| Prowler | Structured posture and benchmark checks | Dedicated security-audit role with tool-specific read permissions | Findings require validation; scope data-readable APIs carefully |
-| ScoutSuite | Cross-service inventory and visual configuration review | Read-only audit profile, least privilege | Results may be incomplete if APIs are denied |
-| CloudFox | Offensive-oriented IAM, trust and asset enumeration | Targeted read-only permissions | Generated follow-up commands must be reviewed; not proof of exploitability |
-| Pacu | IAM permission analysis and approved demonstration of exploit paths | Separate lab-only identity with explicit permissions for the scenario | Potentially mutating modules are high-risk; not run by default |
-| CloudTrail / GuardDuty | Investigation and detection review | Audit-role access to logs/findings or supplied sanitised exports | GuardDuty detections are not guaranteed; data-event logging needs coverage |
+## 2. Tool selection
 
-**Least privilege:** Start with a purpose-built audit role; `SecurityAudit` may be a starting point but can require scoped supplemental permissions. `ReadOnlyAccess` is comparatively broad and can expose sensitive data. Do not request `AdministratorAccess` for a configuration review. Any mutating permissions should be bound to the exact resources and duration approved for a lab test.
+| Tool | Purpose | Access requirement |
+| --- | --- | --- |
+| AWS CLI | Identity checks and targeted inspection | Selected `List`, `Get` and `Describe` operations |
+| CloudFox | IAM and resource mapping; attack-path hypotheses | Read-only AWS access |
+| Prowler | Configuration checks against security baselines | Security audit / targeted read permissions |
+| ScoutSuite | Cross-service configuration review | Read-only audit permissions |
+| Pacu | IAM enumeration and approved privilege-escalation testing | Reconnaissance permissions; additional mutations only in designated labs |
+| CloudTrail / GuardDuty | Event analysis and investigative context | Read access to configured logs, findings or exports |
 
-## Evidence standard
+The supplied exercises describe AWS CLI actions. The tools above form an appropriate assessment plan; their inclusion does not indicate that a scanner was run during compilation.
 
-Each finding should include: resource identifier (sanitised), original configuration, applicable policy and conditions, actual API responses, user/account context, timestamps, whether a test was permitted, and the corrected-state result. Record **directly observed**, **scenario-described**, **inferred** and **not assessed** claims separately.
+## 3. Privilege-path analysis
 
-Proposed verification artefacts: policy documents showing active versions, Lambda role ARN and trust policy, S3 policy and public-access settings, EC2 metadata options, snapshot sharing attributes, CloudTrail event IDs and sanitised JSON result excerpts. No such raw evidence has been supplied for this initial report.
+For each identity, inspect the permissions it holds and the other permissions it can **cause a service or role to exercise**. This is particularly relevant to:
 
-## Severity method
+- Managed-policy version control on an attached IAM policy.
+- `iam:PassRole` combined with service creation and invocation.
+- Role trusts that admit a broader set of principals than intended.
+- Credentials exposed through metadata or configuration.
+- EC2 instance roles reachable through application flaws and IMDS.
 
-Use a contextual analysis of likelihood and consequence: starting access needed, exploit preconditions, role privileges, data sensitivity, compensating controls, reachable surface and blast radius. The ratings in this repository are conditional, not calculated CVSS scores or actual business impact estimates.
+An attack path is assessed as a whole; the existence of an isolated permission is insufficient.
 
-## Testing discipline
+## 4. Data-access review
 
-Only exercise the minimum test needed to establish an authorised effect. Prefer an intentionally benign marker or a permission-check demonstration to broad data extraction. Capture before/after state and account for eventual consistency of AWS policy changes. Where fixes may interrupt workloads, stage and test them with the application owner.
+Test whether sensitive objects, historical versions and backup snapshots are reachable by identities without a business requirement. Inspect IAM policy, resource policy, ACL/public-access settings and KMS constraints where they affect the outcome.
 
-## Coverage limitations
+For storage controls, distinguish confidentiality failures from hardening or availability gaps. The absence of SSE-KMS, for example, does not mean new S3 objects are unencrypted.
 
-CloudFox, Prowler, ScoutSuite and Pacu do not deliver a guarantee of completeness. They can miss conditional IAM evaluation effects, relationships across accounts, application-specific paths, limited-visibility resources and tools' version-dependent behaviour. Recheck findings manually against effective permissions, organisational restrictions and resource policies.
+## 5. Detection and remediation
+
+Use management events to build IAM and role-assumption timelines. When the investigation concerns S3 object reads, establish whether object-level data events were recorded. Compare the intended detection coverage with the logs actually available.
+
+For each correction, record the original condition, the policy or configuration change, a negative test against the original unwanted behaviour and a positive test for expected application operation.
+
+## 6. Reporting standard
+
+Findings include a specific control failure, the conditions under which it matters, the resulting access or impact, and a checkable remediation. Several exercises share the same root cause; duplicate symptoms are consolidated rather than presented as separate security incidents.
