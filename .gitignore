@@ -1,0 +1,17 @@
+# Local or exported security evidence — never commit by default
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+*.key
+credentials
+.aws/
+private/
+raw-evidence/
+secrets/
+*.tfstate
+*.tfstate.*
+crash.log
+.DS_Store
